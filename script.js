@@ -1,5 +1,7 @@
 let scene, camera, renderer, controls, model;
 let gui; // New variable for lil-gui
+let rotationSpeed = 0.005; // Speed of rotation
+let isRotating = false; // Flag to control rotation
 
 const textures = {
     body: {
@@ -75,6 +77,7 @@ function init() {
             
             applyTextures();
             addGUIControls();
+            centerModel();
             
             // Center the model
             centerModel();
@@ -86,6 +89,12 @@ function init() {
                     console.log(child.name);
                 }
             });
+            
+            // Log animations
+            console.log("Animations:");
+            gltf.animations.forEach((clip, index) => {
+                console.log(`${index}: ${clip.name} (Duration: ${clip.duration}s)`);
+            });
         },
         function (xhr) {
             console.log((xhr.loaded / xhr.total * 100) + '% loaded');
@@ -95,7 +104,25 @@ function init() {
         }
     );
 
+    addRotationControls();
+
     animate();
+}
+
+function addRotationControls() {
+    const rotationFolder = gui.addFolder('Model Rotation');
+    
+    rotationFolder.add({ isRotating: isRotating }, 'isRotating')
+        .name('Auto Rotate')
+        .onChange((value) => {
+            isRotating = value;
+        });
+
+    rotationFolder.add({ speed: rotationSpeed }, 'speed', 0, 0.05)
+        .name('Rotation Speed')
+        .onChange((value) => {
+            rotationSpeed = value;
+        });
 }
 
 function centerModel() {
@@ -213,7 +240,12 @@ function addGUIControls() {
 
 function animate() {
     requestAnimationFrame(animate);
-    controls.update(); // Required if controls.enableDamping is set to true
+
+    if (isRotating && model) {
+        model.rotation.y += rotationSpeed;
+    }
+
+    controls.update();
     renderer.render(scene, camera);
 }
 
